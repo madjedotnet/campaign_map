@@ -1,0 +1,254 @@
+{% extends 'base.html.twig' %}
+{% block stylesheets %}<link rel="stylesheet" href="/css/map.css">{% endblock %}
+        
+{% block title %}{{ map.title }}{% endblock %}
+
+{% block body %}
+    <h1 title="{{ map.createdAt ? map.createdAt|date('Y-m-d H:i:s') : '' }} - {{ map.content }}">Map - {{ map.title }}</h1>
+
+    <div class="honeycomb">
+        {% set rowTiles = '00' %}
+        <div class="ibws-fix">
+            {% for tile in map.tiles|sort((a, b) => a.coordinates <=> b.coordinates) %}
+                {% set actualRow = tile.coordinates|slice(0, 2) %}
+                {% if actualRow == rowTiles %}
+                    {% if tile.army != null %}
+                        {% set armee = tile.army %}
+                        {% set couleur = tile.army.color %}
+                    {% else %}
+                        {% set armee = "" %}
+                        {% if tile.scenery != null %}
+                            {% set couleur = "#d3d3d3" %}
+                        {% else %}
+                            {% set couleur = "#f2f2f2" %}
+                        {% endif %}
+                    {% endif %}
+                    <div id="{{ tile.id }}" class="hexagon" style="background: {{ couleur }};">
+                        {% if tile.scenery != null %}
+                            <div class="hexagontent region scenery{{ tile.scenery }}" data-bs-toggle="modal" data-bs-target="#editTileModal" data-bs-whatever="{{ tile.id }}">{{ tile.coordinates }}</div>
+                        {% else %}
+                            <div class="hexagontent" data-bs-toggle="modal" data-bs-target="#editTileModal" data-bs-whatever="{{ tile.id }}"></div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    {% set rowTiles = actualRow %}
+                    {% if tile.army != null %}
+                        {% set armee = tile.army %}
+                        {% set couleur = tile.army.color %}
+                    {% else %}
+                        {% set armee = "" %}
+                        {% if tile.scenery != null %}
+                            {% set couleur = "#d3d3d3" %}
+                        {% else %}
+                            {% set couleur = "#f2f2f2" %}
+                        {% endif %}
+                    {% endif %}
+                    </div>
+                    <div class="ibws-fix">
+                        <div id="{{ tile.id }}" class="hexagon" style="background: {{ couleur }};">
+                            {% if tile.scenery != null %}
+                                <div class="hexagontent region scenery{{ tile.scenery }}" data-bs-toggle="modal" data-bs-target="#editTileModal" data-bs-whatever="{{ tile.id }}">{{ tile.coordinates }}</div>
+                            {% else %}
+                                <div class="hexagontent" data-bs-toggle="modal" data-bs-target="#editTileModal" data-bs-whatever="{{ tile.id }}"></div>
+                            {% endif %}
+                        </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+        <!-- Modal -->
+<div class="modal fade" id="editTileModal" tabindex="-1" aria-labelledby="editTileModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editTileModalLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {# {{ include('tiles/_form.html.twig', {'button_label': 'Update'}) }} #}
+        <select name="armieslist" id="armieslist"></select>
+        <select name="scenerieslist" id="scenerieslist"></select>
+        <select name="buildingslist" id="buildingslist"></select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close-Test</button>
+        <button type="button" class="btn btn-primary">Send message</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+    <a href="{{ path('maps_index') }}">back to list</a>
+
+    <a href="{{ path('maps_edit', {'id': map.id}) }}">edit</a>
+
+    {{ include('maps/_delete_form.html.twig') }}
+{% endblock %}
+{% block javascripts %}
+    <script>
+        window.onload = () => {
+            // chargement des combos
+            loadSceneries()
+            loadArmies()
+            loadBuildings()
+            // vérifier ici si on peut récupérer les éléments qu'on souhaite
+            let edit = document.querySelectorAll("div.hexagon")
+            for(let tuile of edit){
+                tuile.addEventListener("click", function(){
+                    //console.log(this)
+                    let xhr = new XMLHttpRequest;
+                    //fetch("/apip/tiles/" + clikedTileId).then(response => {
+                    xhr.open("get", `/apip/tiles/${this.id}`)
+                    //api/tile/${this.id}/load
+                    xhr.responseType = "json"
+                    xhr.send()
+
+                    xhr.onload = function(){
+                        //Si le statut HTTP n'est pas 200...
+                        if (xhr.status != 200){ 
+                            //...On affiche le statut et le message correspondant
+                            alert("Erreur " + xhr.status + " : " + xhr.statusText);
+                        //Si le statut HTTP est 200, on affiche le nombre d'octets téléchargés et la réponse
+                        }else{
+                            const stringifiedTile = JSON.stringify(xhr.response)
+                            const tile = JSON.parse(stringifiedTile)
+                            //console.log(tile.scenery.id)
+                            let selSceneries = document.querySelector("select#scenerieslist")
+                            if(selSceneries.hasChildNodes) {
+                                var sceneries = selSceneries.childNodes;
+                                for (var scenery of sceneries) {
+                                    scenery.removeAttribute("selected", "selected")
+                                    if(tile.scenery != null) {
+                                        if(scenery.value == tile.scenery.id) {
+                                            scenery.setAttribute("selected", "selected")
+                                        }
+                                    }
+                                }
+                            }
+                            let selArmies = document.querySelector("select#armieslist")
+                            if(selArmies.hasChildNodes) {
+                                var armies = selArmies.childNodes;
+                                for (var army of armies) {
+                                    army.removeAttribute("selected", "selected")
+                                    if(tile.army != null) {
+                                        if(army.value == tile.army.id) {
+                                            army.setAttribute("selected", "selected")
+                                        }
+                                    }
+                                }
+                            }
+                            let selBuildings = document.querySelector("select#buildingslist")
+                            if(selBuildings.hasChildNodes) {
+                                var buildings = selBuildings.childNodes;
+                                for (var building of buildings) {
+                                    building.removeAttribute("selected", "selected")
+                                    if(tile.army != null) {
+                                        if(building.value == tile.building.id) {
+                                            building.setAttribute("selected", "selected")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+                })
+            }
+        }
+        
+        function loadSceneries(){
+            let xhr = new XMLHttpRequest;
+            xhr.open("get", `/apip/warhammer_sceneries`)
+            xhr.responseType = "json"
+            xhr.send()
+
+            xhr.onload = function(){
+                //Si le statut HTTP n'est pas 200...
+                if (xhr.status != 200){ 
+                    //...On affiche le statut et le message correspondant
+                    alert("Erreur " + xhr.status + " : " + xhr.statusText);
+                //Si le statut HTTP est 200, on affiche le nombre d'octets téléchargés et la réponse
+                }else{
+                    const stringifiedSceneries = JSON.stringify(xhr.response)
+                    const sceneries = JSON.parse(stringifiedSceneries)
+                    let selectSceneries = document.querySelector("select#scenerieslist")
+                            
+                    var cbSceneries = document.createElement("select")
+                    var optNone = document.createElement("option")
+                    optNone.value = ""
+                    optNone.innerHTML = ""
+                    selectSceneries.appendChild(optNone)
+                    for(scenery of sceneries["hydra:member"]){
+                        var optScenery = document.createElement("option")
+                        optScenery.value = scenery.id
+                        optScenery.innerHTML = scenery.name
+                        selectSceneries.appendChild(optScenery)
+                    }
+                }
+            }
+        }
+
+        function loadArmies(){
+            let xhr = new XMLHttpRequest;
+            xhr.open("get", `/apip/armies`)
+            xhr.responseType = "json"
+            xhr.send()
+
+            xhr.onload = function(){
+                //Si le statut HTTP n'est pas 200...
+                if (xhr.status != 200){ 
+                    //...On affiche le statut et le message correspondant
+                    alert("Erreur " + xhr.status + " : " + xhr.statusText);
+                //Si le statut HTTP est 200, on affiche le nombre d'octets téléchargés et la réponse
+                }else{
+                    const stringifiedArmies = JSON.stringify(xhr.response)
+                    const armies = JSON.parse(stringifiedArmies)
+                    let selectArmies = document.querySelector("select#armieslist")
+                    var cbArmies = document.createElement("select")
+                    var optNone = document.createElement("option")
+                    optNone.value = ""
+                    optNone.innerHTML = ""
+                    selectArmies.appendChild(optNone)
+                    for(army of armies["hydra:member"]){
+                        var optArmy = document.createElement("option")
+                        optArmy.value = army.id
+                        optArmy.innerHTML = army.name
+                        selectArmies.appendChild(optArmy)
+                    }
+                }
+            }
+        }
+
+        function loadBuildings(){
+            let xhr = new XMLHttpRequest;
+            xhr.open("get", `/apip/buildings`)
+            xhr.responseType = "json"
+            xhr.send()
+
+            xhr.onload = function(){
+                //Si le statut HTTP n'est pas 200...
+                if (xhr.status != 200){ 
+                    //...On affiche le statut et le message correspondant
+                    alert("Erreur " + xhr.status + " : " + xhr.statusText);
+                //Si le statut HTTP est 200, on affiche le nombre d'octets téléchargés et la réponse
+                }else{
+                    const stringifiedBuidlings = JSON.stringify(xhr.response)
+                    const buildings = JSON.parse(stringifiedBuidlings)
+                    let selectBuildings = document.querySelector("select#buildingslist")
+                    var cbBuildings = document.createElement("select")
+                    var optNone = document.createElement("option")
+                    optNone.value = ""
+                    optNone.innerHTML = ""
+                    selectBuildings.appendChild(optNone)
+                    for(building of buildings["hydra:member"]){
+                        
+                        var optBuilding = document.createElement("option")
+                        optBuilding.value = building.id
+                        optBuilding.innerHTML = building.name
+                        selectBuildings.appendChild(optBuilding)
+                    }
+                }
+            }
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tiles{% endblock %}
+
+{% block body %}
+    <h1>Tiles</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ tile.id }}</td>
+            </tr>
+            <tr>
+                <th>Coordinates</th>
+                <td>{{ tile.coordinates }}</td>
+            </tr>
+            <tr>
+                <th>Scenery</th>
+                <td>{{ tile.scenery }}</td>
+            </tr>
+            <tr>
+                <th>Map</th>
+                <td>{{ tile.map }}</td>
+            </tr>
+            <tr>
+                <th>Army</th>
+                <td>{{ tile.army }}</td>
+            </tr>
+            <tr>
+                <th>Building</th>
+                <td>{{ tile.building }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('tiles_index') }}">back to list</a>
+
+    <a href="{{ path('tiles_edit', {'id': tile.id}) }}">edit</a>
+
+    {{ include('tiles/_delete_form.html.twig') }}
+{% endblock %}

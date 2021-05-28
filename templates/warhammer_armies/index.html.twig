@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}WarhammerArmies index{% endblock %}
+
+{% block body %}
+    <h1>WarhammerArmies index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for warhammer_army in warhammer_armies %}
+            <tr>
+                <td>{{ warhammer_army.id }}</td>
+                <td>{{ warhammer_army.name }}</td>
+                <td>
+                    <a href="{{ path('warhammer_armies_show', {'id': warhammer_army.id}) }}">show</a>
+                    <a href="{{ path('warhammer_armies_edit', {'id': warhammer_army.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="3">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('warhammer_armies_new') }}">Create new</a>
+{% endblock %}

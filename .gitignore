@@ -14,3 +14,9 @@
 .phpunit.result.cache
 /phpunit.xml
 ###< symfony/phpunit-bridge ###
+
+
+###>todo  ###
+/public/test.rest
+/public/TODO
+/public/TODO_AJAXREQUEST

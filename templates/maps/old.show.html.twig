@@ -1,0 +1,86 @@
+{% extends 'base.html.twig' %}
+{% block stylesheets %}<link rel="stylesheet" href="/css/map.css">{% endblock %}
+        
+{% block title %}{{ map.title }}{% endblock %}
+
+{% block body %}
+    <h1 title="{{ map.createdAt ? map.createdAt|date('Y-m-d H:i:s') : '' }} - {{ map.content }}">Map - {{ map.title }}</h1>
+
+    <div class="honeycomb">
+        {% set rowTiles = '00' %}
+        <div class="ibws-fix">
+            {% for tile in map.tiles|sort((a, b) => a.coordinates <=> b.coordinates) %}
+                {% set actualRow = tile.coordinates|slice(0, 2) %}
+                {% if actualRow == rowTiles %}
+                    {% if tile.army != null %}
+                        {% set armee = tile.army %}
+                        {% set couleur = tile.army.color %}
+                    {% else %}
+                        {% set armee = "" %}
+                        {% if tile.scenery != null %}
+                            {% set couleur = "#d3d3d3" %}
+                        {% else %}
+                            {% set couleur = "#f2f2f2" %}
+                        {% endif %}
+                    {% endif %}
+                    <div id="{{ tile.coordinates }}" class="hexagon" style="background: {{ couleur }};">
+                        {% if tile.scenery != null %}
+                            <div class="hexagontent region scenery{{ tile.scenery }}" data-bs-toggle="modal" data-bs-target="#editTileModal" data-bs-whatever="{{ tile.id }}">{{ tile.coordinates }}</div>
+                        {% else %}
+                            <div class="hexagontent" data-bs-toggle="modal" data-bs-target="#editTileModal" data-bs-whatever="{{ tile.id }}"></div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    {% set rowTiles = actualRow %}
+                    {% if tile.army != null %}
+                        {% set armee = tile.army %}
+                        {% set couleur = tile.army.color %}
+                    {% else %}
+                        {% set armee = "" %}
+                        {% if tile.scenery != null %}
+                            {% set couleur = "#d3d3d3" %}
+                        {% else %}
+                            {% set couleur = "#f2f2f2" %}
+                        {% endif %}
+                    {% endif %}
+                    </div>
+                    <div class="ibws-fix">
+                        <div id="{{ tile.coordinates }}" class="hexagon" style="background: {{ couleur }};">
+                            {% if tile.scenery != null %}
+                                <div class="hexagontent region scenery{{ tile.scenery }}" data-bs-toggle="modal" data-bs-target="#editTileModal" data-bs-whatever="{{ tile.id }}">{{ tile.coordinates }}</div>
+                            {% else %}
+                                <div class="hexagontent" data-bs-toggle="modal" data-bs-target="#editTileModal" data-bs-whatever="{{ tile.id }}"></div>
+                            {% endif %}
+                        </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+
+    <a href="{{ path('maps_index') }}">back to list</a>
+
+    <a href="{{ path('maps_edit', {'id': map.id}) }}">edit</a>
+
+    {{ include('maps/_delete_form.html.twig') }}
+    
+    <!-- Modal -->
+<div class="modal fade" id="editTileModal" tabindex="-1" aria-labelledby="editTileModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editTileModalLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- ICI FORMULAIRE D'EDITION DES TUILES/TILES -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Send message</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
